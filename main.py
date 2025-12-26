@@ -6,9 +6,6 @@ from agents.sql_feedback_agent import run_sql_feedback_agent
 
 if __name__ == "__main__":
     print("Hello from main.py")
-
-    # question = "Show me revenue by product category"
-
     questions = [
         "What are our best-selling products?",
         "What is the total sales for last quarter?",
