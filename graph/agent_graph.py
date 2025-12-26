@@ -1,32 +1,29 @@
 from langgraph.graph import StateGraph
 from typing import TypedDict, Dict, Any
-from agents.story_agent import run_story_agent
+from agents.query_validator_agent import run_validator_agent
 from agents.sql_agent import run_sql_agent
 
 class StoryState(TypedDict):
     question: str
-    story_plan: Dict[str, Any]
+    validator: Dict[str, Any]
     sql_query: str
 
-def story_agent_node(state: StoryState):
-    plan = run_story_agent(state["question"])
-    print("From Story Agent Node:")
-    print("Generated Story Plan:", plan)
-    return {"story_plan": plan}
+def query_validator_node(state: StoryState):
+    plan = run_validator_agent(state["question"])
+    # print("From Query Validator Node:")
+    # print("Generated Query Validation Plan:", plan)
+    return {"validator": plan}
 
 def sql_agent_node(state):
-    sql = run_sql_agent(state["story_plan"])
+    sql = run_sql_agent(state["validator"])
     print("From SQL Agent Node:")
-    print("Generated SQL Query:", sql)
-
     return {"sql_query": sql}
 
 graph = StateGraph(StoryState)
 
-graph.add_node("story_agent", story_agent_node)
+graph.add_node("query_validator", query_validator_node)
 graph.add_node("sql_agent", sql_agent_node)
 
-graph.set_entry_point("story_agent")
-graph.add_edge("story_agent", "sql_agent")
-
-story_graph = graph.compile()
+graph.set_entry_point("query_validator")
+graph.add_edge("query_validator", "sql_agent")
+agents_graph = graph.compile()
