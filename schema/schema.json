@@ -1,0 +1,40 @@
+{
+  "facts": {
+    "fact_sales": {
+      "keys": {
+        "primary": ["order_number", "order_line_item"],
+        "foreign": {
+          "order_date": "dim_calendar.date",
+          "product_key": "dim_products.product_key",
+          "customer_key": "dim_customers.customer_key",
+          "territory_key": "dim_territories.sales_territory_key"
+        }
+      },
+      "metrics": ["order_quantity"],
+      "derived_metrics": {
+        "revenue": "order_quantity * dim_products.product_price",
+        "cost": "order_quantity * dim_products.product_cost",
+        "profit": "(order_quantity * product_price) - (product_cost * order_quantity)"
+      }
+    },
+    "fact_returns": {
+      "keys": {
+        "primary": ["return_id"],
+        "foreign": {
+          "return_date": "dim_calendar.date",
+          "product_key": "dim_products.product_key",
+          "territory_key": "dim_territories.sales_territory_key"
+        }
+      },
+      "metrics": ["return_quantity"]
+    }
+  },
+  "dimensions": {
+    "dim_calendar": ["date", "year", "quarter", "month", "month_name", "day_of_week", "day_name", "week_of_year"],
+    "dim_product_categories": ["product_category_key", "category_name"],
+    "dim_product_subcategories": ["product_subcategory_key", "subcategory_name", "product_category_key"],
+    "dim_products": ["product_key", "product_subcategory_key", "product_sku", "product_name", "model_name", "product_description", "product_color", "product_size", "product_style", "product_cost", "product_price"],
+    "dim_customers": ["customer_key", "prefix", "first_name", "last_name", "birth_date", "marital_status", "gender", "email_address", "annual_income", "total_children", "education_level", "occupation", "home_owner"],
+    "dim_territories": ["sales_territory_key", "region", "country", "continent"]
+  }
+}
