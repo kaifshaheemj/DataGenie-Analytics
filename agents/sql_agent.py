@@ -1,45 +1,63 @@
 from config.settings import llm
-from schema.schema_loader import load_schema_text
+from schema.schema_prompt import SQL_SCHEMA_PROMPT
+import json
 
-SYSTEM_PROMPT = """
-You are the SQL Agent for an AI analytics system.
+MAX_RETRIES = 3
 
-Your job is to convert an analytics plan into SAFE PostgreSQL SQL.
+def run_sql_agent(validator: dict):
+    print("Running SQL Agent with story plan:")
 
-RULES:
-- Output ONLY SQL (no text around it).
-- SELECT-only (no UPDATE, DELETE, INSERT, DROP).
-- Use ONLY tables and columns from the provided schema.
-- Prefer explicit JOINs.
-- Use GROUP BY when aggregation is needed.
-- If mapping is unclear, return: /* unable to generate SQL */
-"""
+    for attempt in range(1, MAX_RETRIES + 1):
+        print(f"\n--- SQL Agent Attempt {attempt} ---")
 
-def run_sql_agent(story_plan: dict):
-    print("Running SQL Agent with story plan:", story_plan)
-    schema_text = load_schema_text()
+        user_prompt = f"""
+            DATABASE SCHEMA:
+            {SQL_SCHEMA_PROMPT}
 
-    user_prompt = f"""
-        DATABASE SCHEMA (source of truth):
-        {schema_text}
+            TASK:
+            Generate PostgreSQL SQL for this analytics plan:
 
-        TASK:
-        Generate PostgreSQL SQL that answers this analytics plan:
+            {validator}
 
-        {story_plan}
+            Return ONLY valid JSON:
+            {{
+            "sql": "<query>"
+            }}
+            """
+        response = llm.invoke([
+            {"role": "system", "content": "You generate SQL only following instructions strictly."},
+            {"role": "user", "content": user_prompt}
+        ])
 
-        IMPORTANT:
-        - Map logical terms (like "revenue", "customer", "category", "date")
-        to the correct columns based on schema.
-        - Revenue = order_quantity * dim_products.product_price
-        - Profit = revenue - (order_quantity * dim_products.product_cost)
+        text = response.content.strip()
+        print("Raw model output:\n", text)
 
-        Return ONLY SQL.
-        """
-    print("SQL Agent user content prepared.")
-    response = llm.invoke([
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_prompt}
-    ])
-    print("SQL Agent response:", response.content)
-    return response.content
+        # Remove fences if present
+        if text.startswith("```"):
+            text = (
+                text.replace("```json", "")
+                    .replace("```sql", "")
+                    .replace("```", "")
+                    .strip()
+            )
+
+        # Try parse JSON safely
+        try:
+            data = json.loads(text)
+        except Exception as e:
+            print("JSON parse failed:", e)
+            continue   # retry
+
+        sql = (data.get("sql") or "").strip()
+
+        # if model returned empty / null sql → retry
+        if not sql or sql.lower() == "null" or "unable" in sql.lower():
+            print("Model returned null/invalid SQL — retrying...")
+            continue
+
+        print("SQL Agent produced valid SQL.")
+        return sql
+
+    # After retries failed
+    print("SQL Agent failed after retries.")
+    return "/* unable to generate SQL */"
