@@ -39,17 +39,17 @@ Return JSON in exactly this structure:
 {
   "is_valid": boolean,
   "is_analytics": boolean,
+  "analysis_goal": "",
   "require_sql": true
 }
 """
 
-
-def run_story_agent(question: str) -> Dict[str, Any]:
+def run_validator_agent(question: str) -> Dict[str, Any]:
     prompt = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": f"User question:\n{question}\n\n{JSON_SPEC}"}
     ]
-    print("Running Story Agent with question:", question)
+    print("Running Query Validator Agent with question:", question)
     response = llm.invoke(prompt)
-    print("Story Agent response:", response.content)
+    print("Query Validator Agent response:", response.content)
     return response.content
