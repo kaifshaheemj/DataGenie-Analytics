@@ -1,6 +1,11 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+path = os.getenv("SCHEMA_PATH")
 
 def load_schema_text():
-    path = "C:\DataGenie\DataGenie-Analytics\schema\schema.json"
+   
     with open(path, "r", encoding="utf-8") as f:
         print("Loading schema from:", path)
         content = f.read()
