@@ -1,6 +1,6 @@
 
 def load_schema_text():
-    path = "C:\\DataGenie\\schema\\CSV_ATTRIBUTES_WITH_KEYS.md"
+    path = "C:\DataGenie\DataGenie-Analytics\schema\schema.json"
     with open(path, "r", encoding="utf-8") as f:
         print("Loading schema from:", path)
         content = f.read()
