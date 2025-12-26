@@ -8,15 +8,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 PSWD = os.getenv("DB_PASSWORD")
+host = os.getenv("DB_HOST")
+port = os.getenv("DB_PORT")
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_USER")
+DATASET_PATH = os.getenv("DATASET_PATH")
+
 DB_CONFIG = {
-    'host': 'localhost',
-    'port': 5432,
-    'database': 'DataGenie-Analytics',
-    'user': 'postgres',
-    'password': PSWD  # CHANGE THIS TO YOUR ACTUAL PASSWORD
+    'host': host,
+    'port': port,
+    'database': db_name,
+    'user': db_user,
+    'password': PSWD
 }
 
-DATASET_PATH = r'C:\DataGenie\Dataset'
 
 # CSV File mappings
 CSV_FILES = {
@@ -28,7 +33,7 @@ CSV_FILES = {
     'dim_territories': 'AdventureWorks Territory Lookup.csv',
     'fact_sales_2020': 'AdventureWorks Sales Data 2020.csv',
     'fact_sales_2021': 'AdventureWorks Sales Data 2021.csv',
-    'fact_sales_2022': 'AdventureWorks Sales Data 2022.csv',
+    'fact_sales_2022': 'AdventureWorks Sales Data 2022.csv',    
     'fact_returns': 'AdventureWorks Returns Data.csv'
 }
 
