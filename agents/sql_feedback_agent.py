@@ -1,24 +1,6 @@
 from config.settings import llm
-from schema.schema_prompt import SQL_SCHEMA_PROMPT
-
-
-SQL_FEEDBACK_SYSTEM = """
-You are an expert SQL correction assistant.
-
-You receive:
-- the user's question
-- the SQL query that failed
-- the database schema
-- the error message OR empty result signal
-
-Your job: produce a BETTER SQL query.
-
-Rules:
-- Return ONLY JSON: { "sql": "..." }
-- Never reuse invalid columns.
-- Use only schema fields.
-- Explain nothing.
-"""
+from prompts.schema_prompt import SQL_SCHEMA_PROMPT
+from prompts.sql_fallback_prompt import SQL_FALLBACK_SYSTEM
 
 def run_sql_feedback_agent(question, sql, error):
     prompt = f"""
@@ -38,7 +20,7 @@ def run_sql_feedback_agent(question, sql, error):
         """
 
     resp = llm.invoke([
-        {"role": "system", "content": SQL_FEEDBACK_SYSTEM},
+        {"role": "system", "content": SQL_FALLBACK_SYSTEM},
         {"role": "user", "content": prompt}
     ])
 
