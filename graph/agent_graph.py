@@ -1,6 +1,7 @@
 from langgraph.graph import StateGraph
 from typing import TypedDict, Dict, Any
 from agents.query_validator_agent import run_validator_agent
+from agents.dashboard_agent import run_dashboard_agent
 from agents.sql_agent import run_sql_agent
 import json
 import re
@@ -62,7 +63,17 @@ def route_after_validation(state: StoryState):
     if not validator.get("is_valid") or not validator.get("is_analytics"):
         return "non_analytics"
 
+    if validator.get("dashboard"):
+        return "dashboard_agent"
+
     return "sql_agent"
+
+
+def dashboard_node(state: StoryState):
+    questions = run_dashboard_agent(state["question"])
+    print("\nDASHBOARD QUESTIONS GENERATED:\n", questions)
+
+    return {**state, "dashboard_questions": questions}
 
 
 graph = StateGraph(StoryState)
@@ -70,6 +81,7 @@ graph = StateGraph(StoryState)
 graph.add_node("query_validator", query_validator_node)
 graph.add_node("sql_agent", sql_agent_node)
 graph.add_node("non_analytics", non_analytics_node)
+graph.add_node("dashboard_agent", dashboard_node)
 
 graph.set_entry_point("query_validator")
 
@@ -79,7 +91,8 @@ graph.add_conditional_edges(
     {
         "sql_agent": "sql_agent",
         "non_analytics": "non_analytics",
-    },
+        "dashboard_agent": "dashboard_agent"
+    }
 )
 
 agents_graph = graph.compile()
