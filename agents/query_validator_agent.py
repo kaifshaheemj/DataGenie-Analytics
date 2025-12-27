@@ -11,7 +11,10 @@ Return ONLY JSON in this format:
   "analysis_goal": "",
   "require_sql": true,
   "visualization": true,
-  "dashboard": false
+  "dashboard": false,
+  "requires_forecast":false,
+  "horizon":0,
+  "granularity": 0
 }
 """
 
