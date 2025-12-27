@@ -19,6 +19,18 @@ def run_sql_agent(validator: dict):
 
             {validator}
 
+            If requires_forecast = true:
+
+            THE QUERY MUST RETURN A TIME SERIES.
+
+            Rules:
+            - Always SELECT a time column (date, month, or quarter)
+            - Always ORDER BY time ascending
+            - Aggregate by that time period
+            - Output exactly two columns:
+            1) time column
+            2) metric to forecast
+
             Return ONLY valid JSON:
             {{
             "sql": "<query>"
