@@ -1,0 +1,141 @@
+question,sql_query,data_preview
+Which products have the highest profit margin?,"SELECT
+  p.product_name,
+  SUM(s.order_quantity * (p.product_price - p.product_cost)) AS total_profit,
+  SUM(s.order_quantity * p.product_price) AS total_revenue,
+  (SUM(s.order_quantity * (p.product_price - p.product_cost)) / NULLIF(SUM(s.order_quantity * p.product_price), 0)) AS profit_margin
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+GROUP BY
+  p.product_key,
+  p.product_name
+HAVING
+  SUM(s.order_quantity * p.product_price) > 0
+ORDER BY
+  profit_margin DESC;","{""product_name"":{""0"":""Sport-100 Helmet, Black"",""1"":""Sport-100 Helmet, Blue"",""2"":""Fender Set - Mountain"",""3"":""Classic Vest, M"",""4"":""All-Purpose Bike Stand""},""total_profit"":{""0"":41935.816,""1"":43124.718,""2"":54487.62,""3"":7234.682,""4"":23290.956},""total_revenue"":{""0"":65269.748,""1"":67120.179,""2"":87040.8,""3"":11557.0,""4"":37206.0},""profit_margin"":{""0"":0.6425000446,""1"":0.6425000446,""2"":0.6260009099,""3"":0.626,""4"":0.626}}"
+What are our best-selling products?,"SELECT
+  dp.product_name,
+  SUM(fs.order_quantity * dp.product_price) AS revenue
+FROM fact_sales fs
+JOIN dim_products dp ON fs.product_key = dp.product_key
+GROUP BY
+  dp.product_name
+ORDER BY
+  revenue DESC;","{""product_name"":{""0"":""Mountain-200 Black, 46"",""1"":""Mountain-200 Black, 42"",""2"":""Mountain-200 Silver, 38"",""3"":""Mountain-200 Silver, 46"",""4"":""Mountain-200 Black, 38""},""revenue"":{""0"":1241753.5092,""1"":1233557.1163999999,""2"":1213851.8855999999,""3"":1182780.5915999999,""4"":1165936.8758}}"
+What is the total sales for last quarter?,"WITH max_date AS (
+  SELECT MAX(date) AS latest_date FROM dim_calendar
+),
+last_q AS (
+  SELECT
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN EXTRACT(YEAR FROM latest_date) - 1
+      ELSE EXTRACT(YEAR FROM latest_date)
+    END AS target_year,
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN 4
+      ELSE EXTRACT(QUARTER FROM latest_date) - 1
+    END AS target_quarter
+  FROM max_date
+)
+SELECT
+  lq.target_year,
+  lq.target_quarter,
+  SUM(s.order_quantity * p.product_price) AS revenue_last_quarter
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+JOIN dim_calendar c ON s.order_date = c.date
+CROSS JOIN last_q lq
+WHERE c.year = lq.target_year
+  AND c.quarter = lq.target_quarter
+GROUP BY
+  lq.target_year,
+  lq.target_quarter;","{""target_year"":{""0"":2022.0},""target_quarter"":{""0"":1.0},""revenue_last_quarter"":{""0"":4062216.0833000001}}"
+Which customer segments are most profitable over the last 12 months?,"WITH max_date AS (
+  SELECT MAX(date) AS latest_date FROM dim_calendar
+),
+last_12_months AS (
+  SELECT
+    latest_date AS end_date,
+    (latest_date - INTERVAL '12 months') AS start_date
+  FROM max_date
+)
+SELECT
+  dc.demographics,
+  SUM(fs.order_quantity * (dp.product_price - dp.product_cost)) AS profit
+FROM fact_sales AS fs
+JOIN dim_products AS dp
+  ON fs.product_key = dp.product_key
+JOIN dim_customers AS dc
+  ON fs.customer_key = dc.customer_key
+JOIN last_12_months AS l12m
+  ON fs.order_date BETWEEN l12m.start_date AND l12m.end_date
+GROUP BY
+  dc.demographics
+ORDER BY
+  profit DESC;",{}
+Which products have the highest profit margin?,"SELECT
+  p.product_name,
+  SUM(s.order_quantity * (p.product_price - p.product_cost)) AS profit,
+  SUM(s.order_quantity * p.product_price) AS revenue,
+  (SUM(s.order_quantity * (p.product_price - p.product_cost)) * 1.0) / SUM(s.order_quantity * p.product_price) AS profit_margin
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+GROUP BY
+  p.product_key,
+  p.product_name
+ORDER BY
+  profit_margin DESC;","{""product_name"":{""0"":""Sport-100 Helmet, Black"",""1"":""Sport-100 Helmet, Blue"",""2"":""Fender Set - Mountain"",""3"":""Classic Vest, M"",""4"":""All-Purpose Bike Stand""},""profit"":{""0"":41935.816,""1"":43124.718,""2"":54487.62,""3"":7234.682,""4"":23290.956},""revenue"":{""0"":65269.748,""1"":67120.179,""2"":87040.8,""3"":11557.0,""4"":37206.0},""profit_margin"":{""0"":0.6425000446,""1"":0.6425000446,""2"":0.6260009099,""3"":0.626,""4"":0.626}}"
+Which products have the highest profit margin?,"SELECT
+  p.product_name,
+  SUM(s.order_quantity * p.product_price) AS revenue,
+  SUM(s.order_quantity * (p.product_price - p.product_cost)) AS profit,
+  (SUM(s.order_quantity * (p.product_price - p.product_cost)) * 1.0 / SUM(s.order_quantity * p.product_price)) AS profit_margin
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+GROUP BY
+  p.product_key, p.product_name
+HAVING
+  SUM(s.order_quantity * p.product_price) > 0
+ORDER BY
+  profit_margin DESC;","{""product_name"":{""0"":""Sport-100 Helmet, Black"",""1"":""Sport-100 Helmet, Blue"",""2"":""Fender Set - Mountain"",""3"":""Classic Vest, M"",""4"":""All-Purpose Bike Stand""},""revenue"":{""0"":65269.748,""1"":67120.179,""2"":87040.8,""3"":11557.0,""4"":37206.0},""profit"":{""0"":41935.816,""1"":43124.718,""2"":54487.62,""3"":7234.682,""4"":23290.956},""profit_margin"":{""0"":0.6425000446,""1"":0.6425000446,""2"":0.6260009099,""3"":0.626,""4"":0.626}}"
+What are our best-selling products?,"SELECT
+  p.product_name,
+  SUM(s.order_quantity * p.product_price) AS revenue
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+GROUP BY
+  p.product_key, p.product_name
+ORDER BY
+  revenue DESC;","{""product_name"":{""0"":""Mountain-200 Black, 46"",""1"":""Mountain-200 Black, 42"",""2"":""Mountain-200 Silver, 38"",""3"":""Mountain-200 Silver, 46"",""4"":""Mountain-200 Black, 38""},""revenue"":{""0"":1241753.5092,""1"":1233557.1163999999,""2"":1213851.8855999999,""3"":1182780.5915999999,""4"":1165936.8758}}"
+What is the total sales for last quarter?,"WITH max_date AS (
+  SELECT MAX(date) AS latest_date FROM dim_calendar
+),
+last_q AS (
+  SELECT
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN EXTRACT(YEAR FROM latest_date) - 1
+      ELSE EXTRACT(YEAR FROM latest_date)
+    END AS target_year,
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN 4
+      ELSE EXTRACT(QUARTER FROM latest_date) - 1
+    END AS target_quarter
+  FROM max_date
+)
+SELECT
+  lq.target_year,
+  lq.target_quarter,
+  SUM(s.order_quantity * p.product_price) AS revenue_last_quarter
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+JOIN dim_calendar c ON s.order_date = c.date
+CROSS JOIN last_q lq
+WHERE c.year = lq.target_year
+  AND c.quarter = lq.target_quarter
+GROUP BY
+  lq.target_year,
+  lq.target_quarter;","{""target_year"":{""0"":2022.0},""target_quarter"":{""0"":1.0},""revenue_last_quarter"":{""0"":4062216.0833000001}}"

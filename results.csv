@@ -1,0 +1,456 @@
+question,sql_query,data_preview
+What is the total sales for last quarter?,"```sql
+SELECT
+  SUM(fs.order_quantity * dp.product_price) AS total_sales_last_completed_quarter
+FROM
+  fact_sales AS fs
+JOIN
+  dim_products AS dp
+  ON fs.product_key = dp.product_key
+JOIN
+  dim_calendar AS dc
+  ON fs.order_date = dc.date
+WHERE
+      dc.year = (
+        CASE
+          WHEN EXTRACT(QUARTER FROM NOW()) = 1 THEN EXTRACT(YEAR FROM NOW()) - 1
+          ELSE EXTRACT(YEAR FROM NOW())
+        END
+      )
+  AND dc.quarter = (
+        CASE
+          WHEN EXTRACT(QUARTER FROM NOW()) = 1 THEN 4
+          WHEN EXTRACT(QUARTER FROM NOW()) = 2 THEN 1
+          WHEN EXTRACT(QUARTER FROM NOW()) = 3 THEN 2
+          WHEN EXTRACT(QUARTER FROM NOW()) = 4 THEN 3
+        END
+      );
+```",{}
+What is the total sales for last quarter?,"```sql
+WITH latest_sales_quarter AS (
+    SELECT
+        MAX(T2.year) AS latest_year,
+        MAX(T2.quarter) AS latest_quarter
+    FROM fact_sales AS T1
+    JOIN dim_calendar AS T2
+        ON T1.order_date = T2.date
+),
+target_quarter AS (
+    SELECT
+        CASE
+            WHEN lsq.latest_quarter = 1 THEN lsq.latest_year - 1
+            ELSE lsq.latest_year
+        END AS target_year,
+        CASE
+            WHEN lsq.latest_quarter = 1 THEN 4
+            ELSE lsq.latest_quarter - 1
+        END AS target_quarter
+    FROM latest_sales_quarter AS lsq
+)
+SELECT
+    SUM(T1.order_quantity * T3.product_price) AS total_sales_revenue
+FROM fact_sales AS T1
+JOIN dim_calendar AS T2
+    ON T1.order_date = T2.date
+JOIN dim_products AS T3
+    ON T1.product_key = T3.product_key
+JOIN target_quarter AS T4
+    ON T2.year = T4.target_year AND T2.quarter = T4.target_quarter;
+```",{}
+Which customer segments are most profitable over the last 12 months?Which products have the highest profit margin?,"```sql
+SELECT
+    dc.occupation,
+    SUM(fs.order_quantity * dp.product_price - fs.order_quantity * dp.product_cost) AS total_profit
+FROM
+    fact_sales fs
+JOIN
+    dim_calendar dcal ON fs.order_date = dcal.date
+JOIN
+    dim_products dp ON fs.product_key = dp.product_key
+JOIN
+    dim_customers dc ON fs.customer_key = dc.customer_key
+WHERE
+    dcal.date >= (CURRENT_DATE - INTERVAL '12 months')
+GROUP BY
+    dc.occupation
+ORDER BY
+    total_profit DESC
+LIMIT 10;
+
+SELECT
+    dp.product_name,
+    dp.product_sku,
+    (SUM(fs.order_quantity * dp.product_price - fs.order_quantity * dp.product_cost) * 1.0 / NULLIF(SUM(fs.order_quantity * dp.product_price), 0)) AS profit_margin
+FROM
+    fact_sales fs
+JOIN
+    dim_products dp ON fs.product_key = dp.product_key
+GROUP BY
+    dp.product_name,
+    dp.product_sku
+HAVING
+    SUM(fs.order_quantity * dp.product_price) > 0
+ORDER BY
+    profit_margin DESC
+LIMIT 10;
+```",{}
+What is the total sales for last quarter?,"```sql
+WITH latest_quarter_data AS (
+    SELECT
+        MAX(year) AS max_year,
+        MAX(quarter) AS max_quarter
+    FROM
+        dim_calendar
+),
+most_recent_completed_quarter AS (
+    SELECT
+        CASE
+            WHEN max_quarter = 1 THEN max_year - 1
+            ELSE max_year
+        END AS target_year,
+        CASE
+            WHEN max_quarter = 1 THEN 4
+            ELSE max_quarter - 1
+        END AS target_quarter
+    FROM
+        latest_quarter_data
+)
+SELECT
+    SUM(fs.order_quantity * dp.product_price) AS total_sales_revenue
+FROM
+    fact_sales AS fs
+JOIN
+    dim_products AS dp
+    ON fs.product_key = dp.product_key
+JOIN
+    dim_calendar AS dc
+    ON fs.order_date = dc.date
+WHERE
+    dc.year = (SELECT target_year FROM most_recent_completed_quarter) AND
+    dc.quarter = (SELECT target_quarter FROM most_recent_completed_quarter);
+```",{}
+Which customer segments are most profitable over the last 12 months?Which products have the highest profit margin?,"SELECT
+    dc.gender,
+    dc.marital_status,
+    dc.education_level,
+    dc.occupation,
+    SUM((fs.order_quantity * dp.product_price) - (fs.order_quantity * dp.product_cost)) AS total_profit
+FROM
+    fact_sales AS fs
+JOIN
+    dim_products AS dp
+    ON fs.product_key = dp.product_key
+JOIN
+    dim_customers AS dc
+    ON fs.customer_key = dc.customer_key
+JOIN
+    dim_calendar AS dcal
+    ON fs.order_date = dcal.date
+WHERE
+    dcal.date >= (CURRENT_DATE - INTERVAL '12 months')
+GROUP BY
+    dc.gender,
+    dc.marital_status,
+    dc.education_level,
+    dc.occupation
+ORDER BY
+    total_profit DESC
+LIMIT 10;
+
+SELECT
+    dp.product_name,
+    dp.product_sku,
+    SUM((fs.order_quantity * dp.product_price) - (fs.order_quantity * dp.product_cost)) AS total_profit,
+    SUM(fs.order_quantity * dp.product_price) AS total_revenue,
+    CASE
+        WHEN SUM(fs.order_quantity * dp.product_price) = 0 THEN 0
+        ELSE (SUM((fs.order_quantity * dp.product_price) - (fs.order_quantity * dp.product_cost)) * 100.0) / SUM(fs.order_quantity * dp.product_price)
+    END AS profit_margin_percentage
+FROM
+    fact_sales AS fs
+JOIN
+    dim_products AS dp
+    ON fs.product_key = dp.product_key
+JOIN
+    dim_calendar AS dcal
+    ON fs.order_date = dcal.date
+WHERE
+    dcal.date >= (CURRENT_DATE - INTERVAL '12 months')
+GROUP BY
+    dp.product_name,
+    dp.product_sku
+ORDER BY
+    profit_margin_percentage DESC
+LIMIT 10;","{""product_name"":{},""product_sku"":{},""total_profit"":{},""total_revenue"":{},""profit_margin_percentage"":{}}"
+What is the total sales for last quarter?,"```sql
+WITH latest_date_info AS (
+    SELECT
+        year AS current_year,
+        quarter AS current_quarter
+    FROM
+        dim_calendar
+    ORDER BY
+        date DESC
+    LIMIT 1
+),
+target_quarter_info AS (
+    SELECT
+        CASE
+            WHEN current_quarter = 1 THEN current_year - 1
+            ELSE current_year
+        END AS target_year,
+        CASE
+            WHEN current_quarter = 1 THEN 4
+            ELSE current_quarter - 1
+        END AS target_quarter
+    FROM
+        latest_date_info
+)
+SELECT
+    SUM(fs.order_quantity * dp.product_price) AS total_sales_amount
+FROM
+    fact_sales AS fs
+JOIN
+    dim_products AS dp ON fs.product_key = dp.product_key
+JOIN
+    dim_calendar AS dc ON fs.order_date = dc.date
+JOIN
+    target_quarter_info AS tqi ON dc.year = tqi.target_year AND dc.quarter = tqi.target_quarter;
+```",{}
+Which customer segments are most profitable over the last 12 months?Which products have the highest profit margin?,"```sql
+WITH CustomerSegmentProfit AS (
+    SELECT
+        'Customer Segment' AS analysis_type,
+        dc.education_level || ' - ' || dc.occupation AS identifier,
+        SUM((fs.order_quantity * dp.product_price) - (fs.order_quantity * dp.product_cost)) AS metric_value,
+        'Total Profit' AS metric_name
+    FROM
+        fact_sales AS fs
+    JOIN
+        dim_products AS dp ON fs.product_key = dp.product_key
+    JOIN
+        dim_customers AS dc ON fs.customer_key = dc.customer_key
+    WHERE
+        fs.order_date >= CURRENT_DATE - INTERVAL '12 months'
+    GROUP BY
+        dc.education_level,
+        dc.occupation
+),
+ProductProfitMargin AS (
+    SELECT
+        'Product' AS analysis_type,
+        dp.product_name AS identifier,
+        (SUM((fs.order_quantity * dp.product_price) - (fs.order_quantity * dp.product_cost)) * 100.0) / NULLIF(SUM(fs.order_quantity * dp.product_price), 0) AS metric_value,
+        'Profit Margin Percentage' AS metric_name
+    FROM
+        fact_sales AS fs
+    JOIN
+        dim_products AS dp ON fs.product_key = dp.product_key
+    WHERE
+        fs.order_date >= CURRENT_DATE - INTERVAL '12 months'
+    GROUP BY
+        dp.product_name
+)
+SELECT
+    analysis_type,
+    identifier,
+    metric_value,
+    metric_name
+FROM
+    CustomerSegmentProfit
+WHERE
+    metric_value IS NOT NULL -- Exclude segments with no recorded profit (e.g., no sales in the period or zero profit)
+UNION ALL
+SELECT
+    analysis_type,
+    identifier,
+    metric_value,
+    metric_name
+FROM
+    ProductProfitMargin
+WHERE
+    metric_value IS NOT NULL -- Exclude products with no calculable profit margin (e.g., zero revenue)
+ORDER BY
+    analysis_type, -- Group Customer Segments results first, then Product results
+    metric_value DESC; -- Within each group, order by the respective metric value (profit or profit margin percentage) in descending order
+```",{}
+What is the total sales for last quarter?,"```json
+{
+  ""sql"": ""WITH date_parameters AS (\n    SELECT\n        EXTRACT(YEAR FROM CURRENT_DATE) AS current_year,\n        EXTRACT(QUARTER FROM CURRENT_DATE) AS current_quarter\n),\nmost_recent_completed_quarter AS (\n    SELECT\n        CASE\n            WHEN dp.current_quarter = 1 THEN dp.current_year - 1\n            ELSE dp.current_year\n        END AS target_year,\n        CASE\n            WHEN dp.current_quarter = 1 THEN 4\n            ELSE dp.current_quarter - 1\n        END AS target_quarter\n    FROM date_parameters dp\n)\nSELECT\n    SUM(fs.order_quantity * dp.product_price) AS total_sales_for_mrcq\nFROM\n    fact_sales fs\nJOIN\n    dim_products dp ON fs.product_key = dp.product_key\nJOIN\n    dim_calendar dc ON fs.order_date = dc.date\nCROSS JOIN\n    most_recent_completed_quarter mrcq\nWHERE\n    dc.year = mrcq.target_year\n    AND dc.quarter = mrcq.target_quarter;""
+}
+```",{}
+What is the total sales for last quarter?,"```sql
+SELECT
+  SUM(fs.order_quantity * dp.product_price)
+FROM fact_sales AS fs
+JOIN dim_products AS dp
+  ON fs.product_key = dp.product_key
+JOIN dim_calendar AS dc
+  ON fs.order_date = dc.date
+WHERE
+  dc.year = (
+    SELECT
+        CASE
+            WHEN EXTRACT(QUARTER FROM MAX(date)) = 1 THEN EXTRACT(YEAR FROM MAX(date)) - 1
+            ELSE EXTRACT(YEAR FROM MAX(date))
+        END
+    FROM dim_calendar
+  )
+  AND dc.quarter = (
+    SELECT
+        CASE
+            WHEN EXTRACT(QUARTER FROM MAX(date)) = 1 THEN 4
+            ELSE EXTRACT(QUARTER FROM MAX(date)) - 1
+        END
+    FROM dim_calendar
+  );
+```",{}
+What is the total sales for last quarter?,"SELECT
+  SUM(fs.order_quantity * dp.product_price) AS total_sales_revenue
+FROM
+  fact_sales AS fs
+JOIN
+  dim_products AS dp
+  ON fs.product_key = dp.product_key
+JOIN
+  dim_calendar AS dc
+  ON fs.order_date = dc.date
+WHERE
+  (dc.year, dc.quarter) = (
+    CASE
+      WHEN EXTRACT(QUARTER FROM CURRENT_DATE) = 1 THEN EXTRACT(YEAR FROM CURRENT_DATE) - 1
+      ELSE EXTRACT(YEAR FROM CURRENT_DATE)
+    END,
+    CASE
+      WHEN EXTRACT(QUARTER FROM CURRENT_DATE) = 1 THEN 4
+      ELSE EXTRACT(QUARTER FROM CURRENT_DATE) - 1
+    END
+  );","{""total_sales_revenue"":{""0"":null}}"
+What is the total sales for last quarter?,"WITH current_quarter_info AS (
+    SELECT
+        EXTRACT(YEAR FROM CURRENT_DATE) AS current_year,
+        EXTRACT(QUARTER FROM CURRENT_DATE) AS current_quarter
+),
+target_quarter_info AS (
+    SELECT
+        CASE
+            WHEN cqi.current_quarter = 1 THEN cqi.current_year - 1
+            ELSE cqi.current_year
+        END AS target_year,
+        CASE
+            WHEN cqi.current_quarter = 1 THEN 4
+            ELSE cqi.current_quarter - 1
+        END AS target_quarter
+    FROM current_quarter_info cqi
+)
+SELECT
+    SUM(fs.order_quantity * dp.product_price) AS total_sales_last_completed_quarter
+FROM
+    fact_sales AS fs
+JOIN
+    dim_calendar AS dc ON fs.order_date = dc.date
+JOIN
+    dim_products AS dp ON fs.product_key = dp.product_key
+WHERE
+    dc.year = (SELECT target_year FROM target_quarter_info)
+    AND dc.quarter = (SELECT target_quarter FROM target_quarter_info);","{""total_sales_last_completed_quarter"":{""0"":null}}"
+What is the total sales for last quarter?,"WITH LatestSalesData AS (
+    SELECT
+        MAX(dc.year) AS max_year,
+        MAX(dc.quarter) AS max_quarter
+    FROM fact_sales fs
+    JOIN dim_calendar dc ON fs.order_date = dc.date
+),
+TargetQuarter AS (
+    SELECT
+        CASE
+            WHEN lsd.max_quarter = 1 THEN lsd.max_year - 1
+            ELSE lsd.max_year
+        END AS target_year,
+        CASE
+            WHEN lsd.max_quarter = 1 THEN 4
+            ELSE lsd.max_quarter - 1
+        END AS target_quarter
+    FROM LatestSalesData lsd
+)
+SELECT
+    SUM(fs.order_quantity * dp.product_price) AS total_sales_amount
+FROM
+    fact_sales AS fs
+JOIN
+    dim_calendar AS dc ON fs.order_date = dc.date
+JOIN
+    dim_products AS dp ON fs.product_key = dp.product_key
+JOIN
+    TargetQuarter AS tq ON dc.year = tq.target_year AND dc.quarter = tq.target_quarter;","{""total_sales_amount"":{""0"":null}}"
+What is the total sales for last quarter?,"SELECT
+    SUM(fs.order_quantity * dp.product_price) AS total_sales_most_recent_quarter
+FROM
+    fact_sales AS fs
+JOIN
+    dim_products AS dp ON fs.product_key = dp.product_key
+JOIN
+    dim_calendar AS dc ON fs.order_date = dc.date
+WHERE
+    dc.year = (SELECT year FROM dim_calendar WHERE date = (SELECT MAX(date) FROM dim_calendar))
+    AND dc.quarter = (SELECT quarter FROM dim_calendar WHERE date = (SELECT MAX(date) FROM dim_calendar));",{}
+What is the total sales for last quarter?,"WITH max_date AS (
+  SELECT MAX(date) AS latest_date FROM dim_calendar
+),
+last_q AS (
+  SELECT
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN EXTRACT(YEAR FROM latest_date) - 1
+      ELSE EXTRACT(YEAR FROM latest_date)
+    END AS target_year,
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN 4
+      ELSE EXTRACT(QUARTER FROM latest_date) - 1
+    END AS target_quarter
+  FROM max_date
+)
+SELECT
+  lq.target_year,
+  lq.target_quarter,
+  SUM(s.order_quantity * p.product_price) AS revenue_last_quarter
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+JOIN dim_calendar c ON s.order_date = c.date
+CROSS JOIN last_q lq
+WHERE c.year = lq.target_year
+  AND c.quarter = lq.target_quarter
+GROUP BY
+  lq.target_year,
+  lq.target_quarter;",{}
+What is the total sales for last quarter?,"WITH max_date AS (
+  SELECT MAX(date) AS latest_date FROM dim_calendar
+),
+last_q AS (
+  SELECT
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN EXTRACT(YEAR FROM latest_date) - 1
+      ELSE EXTRACT(YEAR FROM latest_date)
+    END AS target_year,
+    CASE 
+      WHEN EXTRACT(QUARTER FROM latest_date) = 1
+        THEN 4
+      ELSE EXTRACT(QUARTER FROM latest_date) - 1
+    END AS target_quarter
+  FROM max_date
+)
+SELECT
+  lq.target_year,
+  lq.target_quarter,
+  SUM(s.order_quantity * p.product_price) AS revenue_last_quarter
+FROM fact_sales s
+JOIN dim_products p ON s.product_key = p.product_key
+JOIN dim_calendar c ON s.order_date = c.date
+CROSS JOIN last_q lq
+WHERE c.year = lq.target_year
+  AND c.quarter = lq.target_quarter
+GROUP BY
+  lq.target_year,
+  lq.target_quarter;","{""target_year"":{""0"":2022.0},""target_quarter"":{""0"":1.0},""revenue_last_quarter"":{""0"":4062216.0833000001}}"
