@@ -1,5 +1,5 @@
 from config.settings import llm
-from schema.schema_prompt import SQL_SCHEMA_PROMPT
+from prompts.schema_prompt import SQL_SCHEMA_PROMPT
 import json
 
 MAX_RETRIES = 3

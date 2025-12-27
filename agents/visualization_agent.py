@@ -1,29 +1,7 @@
 from config.settings import llm
 from agents.query_validator_agent import SYSTEM_PROMPT
 from typing import Dict, Any
-
-VISUALIZATION_SYSTEM_PROMPT = """
-    You are the Visualization Agent.
-
-    Your task:
-    Given a dataset sample and analysis goal,
-    decide the best visualization and mapping.
-
-    You DO NOT:
-    - write SQL
-    - execute code
-    - return Python code
-    - hallucinate columns that don't exist
-
-    Return ONLY JSON in this format:
-
-    {
-    "chart_type": "bar | line | pie | area",
-    "x": "<column_name>",
-    "y": "<column_name>",
-    "title": "<chart title>"
-    }
-    """
+from prompts.visualization_prompt import VISUALIZATION_SYSTEM_PROMPT
 
 def run_visualization_agent(analysis_goal: str, sample_data: str, columns: str) -> str:
     print("Running Visualization Agent with analysis goal:")
