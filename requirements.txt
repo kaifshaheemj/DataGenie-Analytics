@@ -6,3 +6,4 @@ langgraph
 python-dotenv
 plotly
 python-dotenv   
+pmdarima
