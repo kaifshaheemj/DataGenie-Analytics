@@ -1,0 +1,8 @@
+psycopg2-binary
+pandas
+numpy
+langchain-google-genai
+langgraph
+python-dotenv
+plotly
+python-dotenv   
