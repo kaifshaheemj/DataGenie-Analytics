@@ -9,6 +9,7 @@ from utils.clean_utils import clean_json
 from agents.sql_feedback_agent import run_sql_feedback_agent
 from agents.visualization_agent import run_visualization_agent
 from agents.dashboard_agent import run_dashboard_agent
+from agents.narrative_agent import run_narrative_agent
 
 if __name__ == "__main__":
     print("Hello from main.py")
@@ -52,13 +53,15 @@ if __name__ == "__main__":
 
                 sql = sub_result["sql_query"]
                 sql_result = run_sql(dq, sql)
-
+                narrative = run_narrative_agent(dq, sql_result["data"])
+                print("\n📝 Narrative Summary:")
+                print(narrative)
                 if not sql_result["success"]:
                     print("Skipping failed dashboard SQL…")
                     continue
 
                 append_result_to_csv(dq, sql, sql_result["data"], dashboard_mode=True)
-
+            
                 if sub_result["validator"].get("visualization", True):
 
                     visual_spec = run_visualization_agent(
@@ -84,7 +87,9 @@ if __name__ == "__main__":
         sql = result["sql_query"]
         print("\nExecuting SQL query...")
         sql_result = run_sql(question, sql)
-
+        narrative = run_narrative_agent(question, sql_result["data"])
+        print("\n📝 Narrative Summary:")
+        print(narrative)
         # Feedback loop on failure
         if not sql_result["success"]:
             print("Running feedback loop...")
