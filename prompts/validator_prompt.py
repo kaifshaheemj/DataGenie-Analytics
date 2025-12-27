@@ -22,11 +22,20 @@ If the question is NOT related to data analytics (AdventureWorks dataset):
 - visualization = false
 - analysis_goal should explain briefly why.
 
+IF the question asks about the future, prediction, estimate, forecast, projection, or “what will happen”:
+- requires_forecast = true
+- infer horizon when possible (months, quarters, years)
+- infer granularity (day, month, quarter, year)
+
+
 If the question IS analytics:
 - is_valid = true
 - is_analytics = true
 - analysis_goal = should describe what should be analyzed
 - require_sql = true (in most cases)
+- requires_forecast = true (only for future predictions)
+- horizon = number of periods to forecast (only if requires_forecast=true)
+- granularity = time granularity (only if requires_forecast=true)
 
 If the question is broad, high-level, or exploratory (like overview, summary, performance, insights, dashboard, report, how are we doing, etc):
 
