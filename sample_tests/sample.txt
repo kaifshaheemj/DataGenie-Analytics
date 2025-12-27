@@ -1,0 +1,7 @@
+Generated Dashboard Questions:
+ - What were the total revenue, profit, and average profit margin for the company in the last completed quarter?
+ - How have quarterly revenue and profit trended over the past two years, showing year-over-year and quarter-over-quarter growth rates?
+ - Which product categories and subcategories are the top 5 contributors to overall profit, and what is their individual profit margin?
+ - Which sales regions and countries are driving the highest revenue and profit, and what are their respective profit margins compared to the company average?
+ - What is the overall product return rate, and which product categories exhibit the highest return rates, indicating potential quality or customer satisfaction issues?
+ - How do revenue and profit differ across key customer demographic segments (e.g., income, gender, age groups), identifying high-value customer groups?
