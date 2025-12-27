@@ -7,16 +7,20 @@ from utils.clean_utils import clean_json
 
 BASE_DIR = "visualizations"
 
-def render_plotly(df, spec_json):
+def render_plotly(df, spec_json, dashboard_mode=False):
     print("\nRAW VISUAL SPEC:", repr(spec_json))
+
     spec = json.loads(clean_json(spec_json))
     print("CLEANED VISUAL SPEC:", spec)
+
     chart_type = spec["chart_type"]
     x = spec["x"]
     y = spec["y"]
     title = spec["title"]
+
     print(f"Rendering {chart_type} chart: {title} (x: {x}, y: {y})")
 
+    # -------- Build figure ----------
     if chart_type == "bar":
         fig = px.bar(df, x=x, y=y, title=title)
 
@@ -29,19 +33,22 @@ def render_plotly(df, spec_json):
     else:
         fig = px.scatter(df, x=x, y=y, title=title)
 
+    # -------- Build save path --------
     today = datetime.now().strftime("%Y-%m-%d")
     time_str = datetime.now().strftime("%H-%M-%S")
 
-    folder = os.path.join(BASE_DIR, today)
+    if dashboard_mode:
+        folder = os.path.join(BASE_DIR, "dashboard", today)
+    else:
+        folder = os.path.join(BASE_DIR, today)
+
     os.makedirs(folder, exist_ok=True)
 
-    filename = f"{slugify(title)}_{chart_type}_{time_str}.html"
+    filename = f"{slugify(title)}_{chart_type}_{time_str}.png"
     full_path = os.path.join(folder, filename)
 
-    # ---------------------
-    # save chart
-    # ---------------------
-    fig.write_html(full_path)
+    # -------- Save image -------------
+    fig.write_image(full_path)
 
     print(f"Chart saved to: {full_path}")
 
