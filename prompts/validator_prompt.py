@@ -70,4 +70,7 @@ Examples (NO visualization needed):
 - "What is total revenue last month?"
 - "How many customers do we have?"
 - "What is average selling price?"
+- "Which quarter had the highest revenue?"
+
+take decisions according to these rules and return ONLY JSON in this format:
 """
