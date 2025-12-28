@@ -62,7 +62,16 @@ if run_btn and query:
                 df = sql_res["data"]
 
                 narrative = run_narrative_agent(dq, df)
-                st.write(narrative)
+                st.subheader("Narrative Summary")
+                st.markdown(
+                    f"""
+                    <div style='font-size:24px; line-height:1.6;'>
+                        <strong>{narrative}</strong>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+    
 
                 if sub["validator"].get("visualization", True):
 
@@ -114,7 +123,15 @@ if run_btn and query:
         # narrative summary
         narrative = run_narrative_agent(query, df)
         st.subheader("📝 Narrative Summary")
-        st.write(narrative)
+        st.markdown(
+        f"""
+        <div style='font-size:24px; line-height:1.6;'>
+            <strong>{narrative}</strong>
+        </div>
+        """,
+        unsafe_allow_html=True
+        )
+
 
         # preview
         st.subheader("📄 Data Preview")
