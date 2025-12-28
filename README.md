@@ -97,6 +97,12 @@ Data follows a **Star Schema**.
 
 ---
 
+### 🧠 Agentic Workflow
+
+![Agentic Workflow](DG%20-%20Agent%20Workflow.png)
+
+---
+
 ### 🧠 Thought Process While Implementing
 
 Below are detailed documents describing the reasoning, dataset understanding, and validation.
