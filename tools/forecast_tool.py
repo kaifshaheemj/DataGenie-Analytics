@@ -6,14 +6,25 @@ from pmdarima import auto_arima
 def run_forecast(df, time_col, value_col, horizon=6, granularity="month"):
     """
     Generic forecasting tool for business metrics.
-    """
+    """ 
+    print(f"Running forecast on {value_col} over {time_col} for {horizon} periods ({granularity})")
 
     # --------- CLEAN + VALIDATE ----------
     data = df[[time_col, value_col]].dropna().copy()
 
     data[time_col] = pd.to_datetime(data[time_col])
-    data = data.sort_values(time_col).set_index(time_col)
+    data = data.sort_values(time_col)
+    data = (
+        data.groupby(time_col, as_index=False)[value_col]
+            .sum()
+            .sort_values(time_col)
+    )
 
+    data = data.set_index(time_col)
+    data.index = pd.to_datetime(data.index)
+    print(f"Data points after cleaning: {len(data)}")
+    print(data.head())
+    
     if len(data) < 15:
         raise ValueError("Not enough history to forecast. Need at least 15 points.")
 
