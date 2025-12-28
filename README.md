@@ -2,7 +2,7 @@
 
 ## 🎥 Demo
 
-[▶️ Watch the demo]()
+[▶️ Watch the demo](https://drive.google.com/file/d/1vnQHOQcVxHks07ivgHqCM_BKokFKbCuv/view?usp=sharing)
 
 This AI-powered analytics assistant built as part of the **DataGenie Hackathon**.
 
@@ -47,7 +47,7 @@ We use a customized **AdventureWorks** dataset.
 
 | Property | Details |
 |--------|--------|
-| Domain | Retail & Manufacturing (Bicycles) |
+| Domain | Retail & Manufacturing (Bicycles) related products |
 | Records | ~105,000 sales |
 | Time period | 2020 – 2022 |
 | Customers | ~18,484 |
@@ -99,7 +99,7 @@ Data follows a **Star Schema**.
 
 ### 🧠 Agentic Workflow
 
-![Agentic Workflow](DG%20-%20Agent%20Workflow.png)
+![Agentic Workflow](DG-AgentWorkflow-updated.png)
 
 ---
 
