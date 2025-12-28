@@ -12,13 +12,11 @@ from agents.narrative_agent import run_narrative_agent
 from agents.sql_feedback_agent import run_sql_feedback_agent
 from agents.visualization_agent import run_visualization_agent
 from agents.dashboard_agent import run_dashboard_agent
-
-# 👉 NEW (your forecasting tool — implement separately)
 from tools.forecast_tool import run_forecast
 
 
 st.set_page_config(page_title="DataGenie AI Analytics", layout="wide")
-st.title("🤖 DataGenie — AI Analytics Assistant")
+st.title("DataGenie — AI Analytics Assistant")
 
 query = st.text_input("Enter your query")
 run_btn = st.button("Run Analysis")
@@ -30,22 +28,19 @@ if run_btn and query:
         result = agents_graph.invoke({"question": query})
         validator = result["validator"]
 
-        st.subheader("🧠 Interpretation")
-        st.json(validator)
+        # st.subheader("🧠 Interpretation")
+        # st.json(validator)
 
-        # -------------------------
         # NON ANALYTICS
-        # -------------------------
         if not validator.get("is_valid") or not validator.get("is_analytics"):
             st.error("❌ Not an analytics question.")
             st.stop()
 
-        # -------------------------
-        # DASHBOARD MODE
-        # -------------------------
+
+        # DASHBOARD 
         if validator.get("dashboard", False):
 
-            st.info("📊 Dashboard request detected — building dashboard...")
+            st.info("Dashboard request detected — building dashboard...")
 
             raw_dashboard = run_dashboard_agent(query)
             dashboard_questions = json.loads(clean_json(raw_dashboard))["questions"]
@@ -90,12 +85,10 @@ if run_btn and query:
 
             st.stop()
 
-        # -------------------------
         # STANDARD QUERY
-        # -------------------------
         sql = result["sql_query"]
-        st.subheader("📝 SQL Generated")
-        st.code(sql, language="sql")
+        # st.subheader("📝 SQL Generated")
+        # st.code(sql, language="sql")
 
         sql_result = run_sql(query, sql)
 
@@ -109,11 +102,11 @@ if run_btn and query:
                 error=sql_result["error"] or sql_result["reason"]
             )
 
-            st.code(fixed_sql, language="sql")
+            # st.code(fixed_sql, language="sql")
             sql_result = run_sql(query, fixed_sql)
 
             if not sql_result["success"]:
-                st.error("❌ Still failed. Stopping.")
+                st.error("Still failed. Stopping.")
                 st.stop()
 
         df = sql_result["data"]
@@ -127,31 +120,45 @@ if run_btn and query:
         st.subheader("📄 Data Preview")
         st.dataframe(df)
 
-        # -------------------------
-        # FORECAST MODE 🚀
-        # -------------------------
+        # FORECAST 
         if validator.get("requires_forecast", False):
 
             st.subheader("📈 Forecast")
 
-            # SAFETY CHECK
-            if not any(c.lower() in ["date", "year", "month"] for c in df.columns):
-                st.error("Forecasting requires a time column — SQL did not return one.")
-            else:
-                forecast_df, fig = run_forecast(
-                    df=df,
-                    time_col=[c for c in df.columns if c.lower() in ["date", "year", "month"]][0],
-                    value_col=validator.get("metric", "revenue"),
-                    horizon=validator.get("horizon", 6),
-                    granularity=validator.get("time_granularity", "month")
+            # expand allowed time column patterns
+            time_candidates = ["date", "month", "month_start", "year", "timestamp"]
+
+            detected_time_cols = [
+                c for c in df.columns
+                if any(key in c.lower() for key in time_candidates)
+            ]
+
+            if not detected_time_cols:
+                st.error(
+                    "⚠️ Forecasting requires a time column "
+                    "(date / month / year). SQL did not return one."
                 )
+            else:
+                time_col = detected_time_cols[0]
 
-                st.dataframe(forecast_df)
-                st.plotly_chart(fig, use_container_width=True)
+                st.info(f"Using **{time_col}** as time column for forecasting.")
 
-        # -------------------------
+                try:
+                    forecast_df, fig = run_forecast(
+                        df=df,
+                        time_col=time_col,
+                        value_col=validator.get("metric", "revenue"),
+                        horizon=validator.get("horizon", 6),
+                        granularity=validator.get("time_granularity", "month"),
+                    )
+
+                    st.dataframe(forecast_df)
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.success("Forecasting complete!")
+                except Exception as e:
+                    st.warning(f"⚠️ Forecasting failed: {e}")
+
         # VISUALIZATION
-        # -------------------------
         if validator.get("visualization", False):
 
             st.subheader("📊 Visualization")
