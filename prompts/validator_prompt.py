@@ -72,5 +72,5 @@ Examples (NO visualization needed):
 - "What is average selling price?"
 - "Which quarter had the highest revenue?"
 
-take decisions according to these rules and return ONLY JSON in this format:
+take decisions according to these rules and return ONLY JSON in this format
 """
