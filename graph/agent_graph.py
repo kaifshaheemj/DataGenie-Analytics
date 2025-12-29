@@ -3,6 +3,7 @@ from typing import TypedDict, Dict, Any
 from agents.query_validator_agent import run_validator_agent
 from agents.dashboard_agent import run_dashboard_agent
 from agents.sql_agent import run_sql_agent
+from utils.clean_utils import clean_json
 import json
 import re
 
@@ -12,20 +13,6 @@ class StoryState(TypedDict, total=False):
     validator: Dict[str, Any]
     sql_query: str | None
     response: str | None
-
-
-def clean_json(text: str) -> str:
-    if not text:
-        return "{}"
-
-    text = text.strip()
-
-    if text.startswith("```"):
-        text = re.sub(r"```[a-zA-Z]*", "", text)
-        text = text.replace("```", "").strip()
-
-    return text
-
 
 def query_validator_node(state: StoryState):
     raw = run_validator_agent(state["question"])
