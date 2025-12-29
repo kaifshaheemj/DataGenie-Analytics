@@ -1,4 +1,4 @@
-# 🤖 DataGenie — AI Analytics Assistant (Hackathon Project)
+# DataGenie — AI Analytics Assistant (Hackathon Project)
 
 ## 🎥 Demo
 
@@ -6,7 +6,7 @@
 
 This AI-powered analytics assistant built as part of the **DataGenie Hackathon**.
 
-It helps business users ask questions in **plain English**, and automatically converts them into:
+It helps business users ask questions in **plain English** or **natural language**, and automatically converts them into:
 
 ✔ SQL queries  
 ✔ Executable insights  
@@ -149,6 +149,7 @@ DataGenie-Analytics/
 └── README.md
 
 ```
+
 ---
 
 ### Forecasted screenshot
